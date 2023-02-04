@@ -7,7 +7,11 @@ const useMarvelService = () => {
     const _apiBase = 'https://gateway.marvel.com:443/v1/public/';
     const _apiKey = 'apikey=92af49ccc0fbd9cc4f76d67b2adf13d0';
     const _baseOffset = 210;
-    
+
+    const getCharacterByName = async (name) => {
+		const res = await request(`${_apiBase}characters?name=${name}&${_apiKey}`);
+		return res.data.results.map(_transformCharacter);
+	};
 
     const getCharacter = async (id) => {
         const res = await request(`${_apiBase}characters/${id}?${_apiKey}`);
@@ -34,11 +38,13 @@ const useMarvelService = () => {
         return {
             id: char.id,
             name: char.name,
-            description: char.description ? `${char.description.slice(0, 210)}...` : 'There is no description for this character!',
+            description: char.description 
+                        ? `${char.description.slice(0, 210)}...` 
+                        : 'There is no description for this character!',
             thumbnail: char.thumbnail.path + '.' + char.thumbnail.extension,
             homepage: char.urls[0].url,
             wiki: char.urls[1].url,
-            comics: char.comics.items
+            comics: char.comics.items,
         }
     }
 
@@ -47,15 +53,28 @@ const useMarvelService = () => {
             id: comics.id,
             title: comics.title,
             description: comics.description ? `${comics.description.slice(0, 210)}...` : 'There is no description',
-            pageCount: comics.pageCount ? `${comics.pageCount} p.` : 'No information about the number of pages',
+            pageCount: comics.pageCount 
+                        ? `${comics.pageCount} p.` 
+                        : 'No information about the number of pages',
             thumbnail: comics.thumbnail.path + '.' + comics.thumbnail.extension,
             language: comics.textObjects.language || 'en-us',
-            price:comics.prices.price ? `${comics.prices.price}$` : 'not available' 
+            price:comics.prices.price 
+                        ? `${comics.prices.price}$` 
+                        : 'not available',
             
         }
     }
 
-    return {loading, error, getAllCharacters, getCharacter, getComic, getAllComics, clearError}
+    return {
+		loading,
+		error,
+		clearError,
+		getAllCharacters,
+		getCharacterByName,
+		getCharacter,
+		getAllComics,
+		getComic,
+	};
 }
 
 export default useMarvelService;

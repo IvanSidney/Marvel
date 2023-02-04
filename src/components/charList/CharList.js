@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Transition } from 'react-transition-group';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import PropTypes  from 'prop-types';
 
 import Spinner from '../spinner/spinner';
 import ErrorMessage from '../erroeMessage/ErrorMessage';
 import useMarvelService from '../../services/MarvelService';
+
 import './charList.scss';
 
 const CharList = (props) => {
@@ -16,20 +17,9 @@ const CharList = (props) => {
 
     const {loading, error,getAllCharacters} = useMarvelService();
 
-    const duration = 300;
-
-    const defaultStyle = {
-    transition: `all ${duration}ms ease-in-out`,
-    opacity: 0,
-    }
-
-    const transitionStyles = {
-    entering: { opacity: 1 },
-    entered:  { opacity: 1 },
-    };
-
     useEffect(() => {
         onRequest(offset,true);
+        // eslint-disable-next-line
     },[])
 
     const onRequest = (offset, initial) => {
@@ -38,7 +28,7 @@ const CharList = (props) => {
             .then(onCharListLoaded)
     }
 
-    const onCharListLoaded = (newCharList) => {
+    const onCharListLoaded = async (newCharList) => {
         let ended = false;
         if (newCharList.length < 9) {
             ended = true;
@@ -66,13 +56,11 @@ const CharList = (props) => {
             }
 
             return (
-                <Transition in={!newItemLoading} timeout={duration}>
-                    {state => (
+                <CSSTransition key={item.id} timeout={500} classNames="char__item">
                         <li 
                             className="char__item"
                             tabIndex={0}
                             ref={el => itemRefs.current[i] = el}
-                            key={item.id}
                             onClick={() => {
                                 props.onCharSelected(item.id);
                                 focusOnItem(i);
@@ -82,40 +70,38 @@ const CharList = (props) => {
                                     props.onCharSelected(item.id);
                                     focusOnItem(i);
                                 }
-                            }}
-                            style={{
-                                ...defaultStyle,
-                                ...transitionStyles[state]
-                              }}>
+                            }}>
                             <img src={item.thumbnail} alt={item.name} style={imgStyle}/>
                             <div className="char__name">{item.name}</div>
                         </li>
-                    )}
-                </Transition>
+                </CSSTransition>
             )
         });
 
         return (
             <ul className="char__grid">
-                {items}
+               <TransitionGroup component={null}>
+                    {items}
+               </TransitionGroup>
             </ul>
         )
     }
 
     const items = renderItems(charList);
 
-    const erroeMessage = error ? <ErrorMessage/> : null;
-    const spiner = loading && !newItemLoading ? <Spinner/> : null;
+    const errorMessage = error ? <ErrorMessage/> : null;
+    const spinner = loading && !newItemLoading ? <Spinner/> : null;
 
     return (
         <div className="char__list">
-            {erroeMessage}
-            {spiner}
+            {errorMessage}
+            {spinner}
             {items}
-            <button className="button button__main button__long"
-            disabled={newItemLoading}
-            style={{'display': charEnded ? 'none' : 'block'}}
-            onClick={() => onRequest(offset)}>
+            <button 
+                disabled={newItemLoading} 
+                style={{'display' : charEnded ? 'none' : 'block'}}
+                className="button button__main button__long"
+                onClick={() => onRequest(offset)}>
                 <div className="inner">load more</div>
             </button>
         </div>
