@@ -2,10 +2,25 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import useMarvelService from '../../services/MarvelService';
-import Spinner from '../spinner/spinner';
+import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../erroeMessage/ErrorMessage';
 
 import './comicsList.scss';
+
+const setContent = (process, Component, newItemLoading) => {
+    switch (process) {
+        case 'waiting':
+            return <Spinner/>
+        case 'loading':
+            return newItemLoading ? <Component/> : <Spinner/>;
+        case 'confirmed':
+            return <Component/>;
+        case 'error':
+            return <ErrorMessage/>;
+            default:
+                throw new Error('Unexpexted process state')
+    }
+}
 
 const ComicsList = (props) => {
 
@@ -14,7 +29,7 @@ const ComicsList = (props) => {
     const [offset, setOffset] = useState(210);
     const [comicsEnded, setComicsEnded] = useState(false);
 
-    const {loading, error, getAllComics} = useMarvelService();
+    const {getAllComics, process, setProcess} = useMarvelService();
 
     useEffect(() => {
         onRequest(offset,true);
@@ -25,6 +40,7 @@ const ComicsList = (props) => {
         initial ? setNewItemLoading(false) :  setNewItemLoading(true);
         getAllComics(offset)
             .then(onComicsListLoaded)
+            .then(() => {setProcess('confirmed')});
     }
 
     const onComicsListLoaded = (newComicsList) => {
@@ -59,16 +75,9 @@ const ComicsList = (props) => {
         )
     }
 
-    const items = renderItems(comicsList);
-
-    const erroeMessage = error ? <ErrorMessage/> : null;
-    const spiner = loading && !newItemLoading ? <Spinner/> : null;
-
     return (
         <div className="comics__list">
-            {erroeMessage}
-            {spiner}
-            {items}
+             {setContent(process, () => renderItems(comicsList), newItemLoading)}
             <button 
                 className="button button__main button__long"
                 disabled={newItemLoading}
